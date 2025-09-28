@@ -220,9 +220,6 @@ def update_bill():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # --- Main Execution ---
-if __name__ == '__main__':
-    # 1. Initialize the database (creates tables, adds initial products)
-    init_db()
-    
-    # 2. Run the application
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     init_db()
+#     app.run(debug=True) 
