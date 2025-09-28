@@ -92,7 +92,305 @@ def init_db():
 # --- HTML & CSS Template ---
 # (Your original HTML_TEMPLATE remains here, UNCHANGED)
 HTML_TEMPLATE = """
-... (Your full HTML_TEMPLATE content is here) ...
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Billing System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @page {
+            size: A5;
+            margin: 0;
+        }
+        @media print {
+            body { 
+                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-container {
+                transform: scale(0.95);
+                transform-origin: top left;
+                width: 100%;
+                height: 100%;
+            }
+            #bill-section {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                page-break-inside: avoid;
+            }
+            .header-logo-print {
+                height: 3.5rem;
+                margin-right: 1rem;
+            }
+            .signature-container-print {
+                margin-top: 2rem !important;
+            }
+            .signature-grid-print {
+                display: flex !important;
+                justify-content: space-between !important;
+                gap: 1.5rem !important;
+            }
+            .signature-grid-print > div {
+                flex: 1;
+            }
+            .overflow-x-auto {
+                overflow-x: visible !important;
+            }
+            /* NEW: Hide the rate column on print */
+            .rate-column {
+                display: none !important;
+            }
+            /* NEW: Show the print-specific footer */
+            .print-only-tfoot {
+                display: table-footer-group;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        /* NEW: Hide the print-specific footer on screen */
+        .print-only-tfoot {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="print-container">
+        <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 no-print fade-in" style="animation-delay: 0.1s;">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Add Billing Item</h2>
+                <form action="/add" method="post" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                    <input type="hidden" name="bill_id" value="{{ bill.id }}">
+                    
+                    <div class="md:col-span-1">
+                        <label for="item_code" class="block text-sm font-medium text-gray-600">Item Code</label>
+                        <select id="item_code" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="" disabled selected>Select</option>
+                            {% for code, data in item_codes.items() %}
+                            <option value="{{ code }}">{{ code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="item_name" class="block text-sm font-medium text-gray-600">Item Name</label>
+                        <input type="text" id="item_name" name="item_name" required readonly
+                               class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm cursor-not-allowed">
+                    </div>
+                    
+                    <div>
+                        <label for="units" class="block text-sm font-medium text-gray-600">Units</label>
+                        <input type="number" id="units" name="units" required min="1" value="1"
+                               class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="rate" class="block text-sm font-medium text-gray-600">Rate</label>
+                        <input type="number" id="rate" name="rate" required min="0" step="0.01" value="0.00"
+                               class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <label for="amount" class="block text-sm font-medium text-gray-600">Amount</label>
+                        <input type="number" id="amount" name="amount" required readonly
+                               class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm cursor-not-allowed">
+                    </div>
+                    
+                    <div class="md:col-start-6">
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                            Add Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="bill-section" class="bg-white rounded-lg shadow-lg p-6 fade-in" style="animation-delay: 0.2s;">
+                <div class="flex justify-between items-start mb-4">                
+                    <img src="{{ url_for('static', filename='Reprography_logo.svg') }}" alt="Reprography Logo" class="h-20 mr-6 header-logo-print">       
+                    <div class="text-right text-sm">
+                        <div class="flex items-center justify-end">
+                            <label for="bill_no" class="font-bold mr-2">Bill No:</label>
+                            <input type="text" id="bill_no" value="{{ bill.bill_display_id }}" data-bill-id="{{ bill.id }}" data-field="bill_display_id" class="w-24 p-1 border rounded bg-white font-semibold bill-field">
+                        </div>
+                        <div class="flex items-center justify-end mt-1">
+                            <label for="bill_date" class="font-bold mr-2">Date:</label>
+                            <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center mb-6 border-b pb-4">
+                    <label for="recipient" class="font-bold mr-2 text-gray-700">To,</label>
+                    <input type="text" id="recipient" placeholder="Enter recipient name or department..." value="{{ bill.recipient or '' }}" data-bill-id="{{ bill.id }}" data-field="recipient" class="w-full p-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-500 bill-field">
+                </div>
+
+                {% if items %}
+                    <div class="overflow-x-auto -mx-6">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S. No.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particulars</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+                                    <!-- CHANGED: Added rate-column class -->
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider rate-column">Rate</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for item in items %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ loop.index }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{{ item.units }}</td>
+                                    <!-- CHANGED: Added rate-column class -->
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₹{{ "%.2f"|format(item.amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <!-- CHANGED: Added separate footers for screen and print -->
+                            <tfoot class="bg-gray-50 no-print">
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-right text-sm font-bold text-gray-700 uppercase">Total</td>
+                                    <td class="px-6 py-4 text-right text-sm font-bold text-gray-900">₹{{ "%.2f"|format(total_amount) }}</td>
+                                </tr>
+                            </tfoot>
+                            <tfoot class="bg-gray-50 print-only-tfoot">
+                                <tr>
+                                    <td colspan="3" class="px-6 py-4 text-right text-sm font-bold text-gray-700 uppercase">Total</td>
+                                    <td class="px-6 py-4 text-right text-sm font-bold text-gray-900">₹{{ "%.2f"|format(total_amount) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-16 pt-6 border-t border-gray-200 signature-container-print">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-center signature-grid-print">
+                            <div>
+                                <input type="text" value="{{ bill.prepared_by or '' }}" data-bill-id="{{ bill.id }}" data-field="prepared_by" class="w-full bg-transparent border-b-2 border-gray-300 focus:outline-none focus:border-indigo-500 text-center py-1 signature-input bill-field">
+                                <label class="block text-sm font-semibold text-gray-600 mt-2">Prepared by</label>
+                            </div>
+                            <div>
+                                <input type="text" value="{{ bill.checked_by or '' }}" data-bill-id="{{ bill.id }}" data-field="checked_by" class="w-full bg-transparent border-b-2 border-gray-300 focus:outline-none focus:border-indigo-500 text-center py-1 signature-input bill-field">
+                                <label class="block text-sm font-semibold text-gray-600 mt-2">Checked By</label>
+                            </div>
+                            <div>
+                                <input type="text" value="{{ bill.fic_reprography or '' }}" data-bill-id="{{ bill.id }}" data-field="fic_reprography" class="w-full bg-transparent border-b-2 border-gray-300 focus:outline-none focus:border-indigo-500 text-center py-1 signature-input bill-field">
+                                <label class="block text-sm font-semibold text-gray-600 mt-2">FIC, Reprography</label>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-center text-gray-500 py-8">No items added to the bill yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="mt-8 flex justify-center gap-4 no-print fade-in" style="animation-delay: 0.3s;">
+                <button onclick="window.print()"
+                        class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                    Print Bill
+                </button>
+                <a href="/new"
+                   class="bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                    New Bill
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logic for auto-saving bill fields
+            const billFields = document.querySelectorAll('.bill-field');
+            billFields.forEach(input => {
+                input.addEventListener('change', function() {
+                    const billId = this.getAttribute('data-bill-id');
+                    const fieldName = this.getAttribute('data-field');
+                    const value = this.value;
+
+                    fetch('/update_bill', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            bill_id: billId,
+                            field: fieldName,
+                            value: value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'success') {
+                            console.error('Failed to update field:', fieldName);
+                        }
+                    });
+                });
+            });
+
+            const itemCodeMap = {{ item_codes|tojson }};
+            const itemCodeSelect = document.getElementById('item_code');
+            const itemNameInput = document.getElementById('item_name');
+            const unitsInput = document.getElementById('units');
+            const rateInput = document.getElementById('rate');
+            const amountInput = document.getElementById('amount');
+
+            function calculateAmount() {
+                const units = parseFloat(unitsInput.value) || 0;
+                const rate = parseFloat(rateInput.value) || 0;
+                const amount = units * rate;
+                amountInput.value = amount.toFixed(2);
+            }
+
+            if (itemCodeSelect) {
+                itemCodeSelect.addEventListener('change', function() {
+                    const selectedCode = this.value;
+
+                    if (selectedCode === '0000') {
+                        itemNameInput.value = '';
+                        rateInput.value = '0.00';
+                        unitsInput.value = '1';
+                        
+                        itemNameInput.readOnly = false;
+                        itemNameInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                        itemNameInput.classList.add('bg-white');
+                        itemNameInput.focus();
+                    } else {
+                        const itemData = itemCodeMap[selectedCode];
+                        if (itemData) {
+                            itemNameInput.value = itemData.name;
+                            rateInput.value = itemData.rate.toFixed(2);
+                        } else {
+                            itemNameInput.value = '';
+                            rateInput.value = '0.00';
+                        }
+                        
+                        itemNameInput.readOnly = true;
+                        itemNameInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        itemNameInput.classList.remove('bg-white');
+                    }
+                    
+                    calculateAmount();
+                });
+            }
+
+            if(unitsInput && rateInput && amountInput) {
+                unitsInput.addEventListener('input', calculateAmount);
+                rateInput.addEventListener('input', calculateAmount);
+                calculateAmount();
+            }
+        });
+    </script>
+</body>
+</html>
 """
 
 # --- Flask Routes (Updated to use SQLAlchemy) ---
