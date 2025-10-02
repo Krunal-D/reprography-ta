@@ -90,7 +90,6 @@ def init_db():
         db.close()
         
 # --- HTML & CSS Template ---
-# (Your original HTML_TEMPLATE remains here, UNCHANGED)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -142,11 +141,9 @@ HTML_TEMPLATE = """
             .overflow-x-auto {
                 overflow-x: visible !important;
             }
-            /* NEW: Hide the rate column on print */
             .rate-column {
                 display: none !important;
             }
-            /* NEW: Show the print-specific footer */
             .print-only-tfoot {
                 display: table-footer-group;
             }
@@ -157,7 +154,6 @@ HTML_TEMPLATE = """
         }
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         
-        /* NEW: Hide the print-specific footer on screen */
         .print-only-tfoot {
             display: none;
         }
@@ -241,7 +237,6 @@ HTML_TEMPLATE = """
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S. No.</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particulars</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-                                    <!-- CHANGED: Added rate-column class -->
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider rate-column">Rate</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                                 </tr>
@@ -252,13 +247,11 @@ HTML_TEMPLATE = """
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ loop.index }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{{ item.units }}</td>
-                                    <!-- CHANGED: Added rate-column class -->
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₹{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
-                            <!-- CHANGED: Added separate footers for screen and print -->
                             <tfoot class="bg-gray-50 no-print">
                                 <tr>
                                     <td colspan="4" class="px-6 py-4 text-right text-sm font-bold text-gray-700 uppercase">Total</td>
@@ -290,6 +283,14 @@ HTML_TEMPLATE = """
                             </div>
                         </div>
                     </div>
+
+                    <!-- CHANGED: Note Section Added -->
+                    <div class="mt-8 pt-4 border-t border-dashed">
+                        <p class="text-xs text-gray-600 italic">
+                            <span class="font-bold">Note:</span> The Charges may be credited under A/C 07-03-0202, Use of Reprography Facility.
+                        </p>
+                    </div>
+
                 {% else %}
                     <p class="text-center text-gray-500 py-8">No items added to the bill yet.</p>
                 {% endif %}
@@ -518,6 +519,6 @@ def update_bill():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # --- Main Execution ---
-# if __name__ == '__main__':
-#     init_db()
-#     app.run(debug=True) 
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
