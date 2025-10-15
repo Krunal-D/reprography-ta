@@ -39,6 +39,7 @@ class Bill(Base):
     prepared_by = Column(Text)
     checked_by = Column(Text)
     fic_reprography = Column(Text)
+    job_description = Column(Text)
     items = relationship("BillItem", back_populates="bill", cascade="all, delete-orphan")
 
 class BillItem(Base):
@@ -86,9 +87,17 @@ HTML_TEMPLATE = """
     <style>
         @page { size: A5; margin: 0; }
         @media print {
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            /* NEW: Center the bill on the page */
+            body { 
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                background: white !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
             .no-print { display: none !important; }
-            .print-container { transform: scale(0.95); transform-origin: top left; width: 100%; height: 100%; }
+            .print-container { transform: scale(0.95); transform-origin: top center; width: 100%; height: 100%; }
             #bill-section { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
             .header-logo-print { height: 3.5rem; margin-right: 1rem; }
             .signature-container-print { margin-top: 2rem !important; }
@@ -96,7 +105,7 @@ HTML_TEMPLATE = """
             .signature-grid-print > div { flex: 1; }
             .overflow-x-auto { overflow-x: visible !important; }
             .rate-column { display: none !important; }
-            .print-only-tfoot { display: table-footer-group; }
+            .print-only-tfoot { display: table-footer-group !important; }
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
@@ -221,6 +230,12 @@ HTML_TEMPLATE = """
                                 <input type="text" value="{{ bill.fic_reprography or '' }}" data-bill-id="{{ bill.id }}" data-field="fic_reprography" class="w-full bg-transparent border-b-2 border-gray-300 focus:outline-none focus:border-indigo-500 text-center py-1 signature-input bill-field">
                                 <label class="block text-sm font-semibold text-gray-600 mt-2">FIC, Reprography</label>
                             </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-4 border-t border-dashed">
+                        <div class="flex items-center">
+                            <label for="job_description" class="font-bold mr-2 text-gray-700">Job:</label>
+                            <input type="text" id="job_description" placeholder="Enter job description or details..." value="{{ bill.job_description or '' }}" data-bill-id="{{ bill.id }}" data-field="job_description" class="w-full p-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-500 bill-field">
                         </div>
                     </div>
                     <div class="mt-8 pt-4 border-t border-dashed">
@@ -361,7 +376,6 @@ HTML_TEMPLATE = """
                 const products = await response.json();
                 renderProducts(products);
                 
-                // Update the local itemCodeMap and the main dropdown
                 itemCodeMap = {};
                 products.forEach(p => {
                     itemCodeMap[p.item_code] = { name: p.item_name, rate: p.default_rate };
@@ -410,7 +424,6 @@ HTML_TEMPLATE = """
                 fetchProducts();
             });
             
-            // CHANGED: Functions to close the modal now trigger a page reload
             function closeAndReload() {
                 adminModal.classList.add('hidden');
                 window.location.reload();
@@ -436,7 +449,7 @@ HTML_TEMPLATE = """
                 
                 if (response.ok) {
                     resetProductForm();
-                    fetchProducts(); // Refresh the list inside the modal
+                    fetchProducts();
                 } else {
                     const error = await response.json();
                     alert(`Error: ${error.message || 'Could not save product.'}`);
@@ -522,7 +535,7 @@ def new_bill():
 @app.route('/update_bill', methods=['POST'])
 def update_bill():
     data, db = request.get_json(), next(get_db())
-    allowed = ['bill_display_id', 'bill_date', 'recipient', 'prepared_by', 'checked_by', 'fic_reprography']
+    allowed = ['bill_display_id', 'bill_date', 'recipient', 'prepared_by', 'checked_by', 'fic_reprography', 'job_description']
     if data.get('field') in allowed:
         bill = db.query(Bill).filter(Bill.id == data.get('bill_id')).first()
         if bill:
