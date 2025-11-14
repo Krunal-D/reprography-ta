@@ -87,7 +87,6 @@ HTML_TEMPLATE = """
     <style>
         @page { size: A5; margin: 0; }
         @media print {
-            /* NEW: Center the bill on the page */
             body { 
                 display: flex;
                 justify-content: center;
@@ -100,6 +99,11 @@ HTML_TEMPLATE = """
             .print-container { transform: scale(0.95); transform-origin: top center; width: 100%; height: 100%; }
             #bill-section { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
             .header-logo-print { height: 3.5rem; margin-right: 1rem; }
+            /* CHANGED: Corrected logo size to a valid value */
+            .bits-logo-print {
+                height: 4rem; /* h-16 */
+                width: 4rem;  /* w-16 */
+            }
             .signature-container-print { margin-top: 2rem !important; }
             .signature-grid-print { display: flex !important; justify-content: space-between !important; gap: 1.5rem !important; }
             .signature-grid-print > div { flex: 1; }
@@ -164,15 +168,20 @@ HTML_TEMPLATE = """
             <div id="bill-section" class="bg-white rounded-lg shadow-lg p-6 fade-in" style="animation-delay: 0.2s;">
                 <div class="flex justify-between items-start mb-4">                
                     <img src="{{ url_for('static', filename='Reprography_logo.svg') }}" alt="Reprography Logo" class="h-20 mr-6 header-logo-print">       
-                    <div class="text-right text-sm">
-                        <div class="flex items-center justify-end">
-                            <label for="bill_no" class="font-bold mr-2">Bill No:</label>
-                            <input type="text" id="bill_no" value="{{ bill.bill_display_id }}" data-bill-id="{{ bill.id }}" data-field="bill_display_id" class="w-24 p-1 border rounded bg-white font-semibold bill-field">
+                    
+                    <div class="flex items-start justify-end text-right text-sm">
+                        <div class="mr-4">
+                            <div class="flex items-center justify-end">
+                                <label for="bill_no" class="font-bold mr-2">Bill No:</label>
+                                <input type="text" id="bill_no" value="{{ bill.bill_display_id }}" data-bill-id="{{ bill.id }}" data-field="bill_display_id" class="w-24 p-1 border rounded bg-white font-semibold bill-field">
+                            </div>
+                            <div class="flex items-center justify-end mt-1">
+                                <label for="bill_date" class="font-bold mr-2">Date:</label>
+                                <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
+                            </div>
                         </div>
-                        <div class="flex items-center justify-end mt-1">
-                            <label for="bill_date" class="font-bold mr-2">Date:</label>
-                            <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
-                        </div>
+                        <!-- CHANGED: Corrected to valid Tailwind classes h-16 w-16 -->
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="BITS Pilani Logo" class="h-16 w-16 object-contain bits-logo-print">
                     </div>
                 </div>
                 <div class="flex items-center mb-6 border-b pb-4">
@@ -197,7 +206,7 @@ HTML_TEMPLATE = """
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ loop.index }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{{ item.units }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowGrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₹{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                                 {% endfor %}
@@ -594,4 +603,3 @@ def delete_product(item_code):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-
