@@ -99,7 +99,6 @@ HTML_TEMPLATE = """
             .print-container { transform: scale(0.95); transform-origin: top center; width: 100%; height: 100%; }
             #bill-section { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
             .header-logo-print { height: 3.5rem; margin-right: 1rem; }
-            /* CHANGED: Corrected logo size to a valid value */
             .bits-logo-print {
                 height: 4rem; /* h-16 */
                 width: 4rem;  /* w-16 */
@@ -167,7 +166,10 @@ HTML_TEMPLATE = """
 
             <div id="bill-section" class="bg-white rounded-lg shadow-lg p-6 fade-in" style="animation-delay: 0.2s;">
                 <div class="flex justify-between items-start mb-4">                
-                    <img src="{{ url_for('static', filename='Reprography_logo.svg') }}" alt="Reprography Logo" class="h-20 mr-6 header-logo-print">       
+                    <!-- CHANGED: Replaced img tag with this div -->
+                    <div class="h-20 mr-6 flex items-center header-logo-print">
+                        <span class="text-2xl font-bold text-gray-800 tracking-tight">Instrumentation Unit</span>
+                    </div>
                     
                     <div class="flex items-start justify-end text-right text-sm">
                         <div class="mr-4">
@@ -180,7 +182,6 @@ HTML_TEMPLATE = """
                                 <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
                             </div>
                         </div>
-                        <!-- CHANGED: Corrected to valid Tailwind classes h-16 w-16 -->
                         <img src="{{ url_for('static', filename='logo.png') }}" alt="BITS Pilani Logo" class="h-16 w-16 object-contain bits-logo-print">
                     </div>
                 </div>
@@ -206,7 +207,7 @@ HTML_TEMPLATE = """
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ loop.index }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ item.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{{ item.units }}</td>
-                                    <td class="px-6 py-4 whitespace-nowGrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right rate-column">₹{{ "%.2f"|format(item.rate) }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₹{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                                 {% endfor %}
