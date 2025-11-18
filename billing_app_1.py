@@ -38,7 +38,7 @@ class Bill(Base):
     recipient = Column(Text)
     prepared_by = Column(Text)
     checked_by = Column(Text)
-    fic_reprography = Column(Text)
+    fic_reprography = Column(Text) 
     job_description = Column(Text)
     items = relationship("BillItem", back_populates="bill", cascade="all, delete-orphan")
 
@@ -87,7 +87,6 @@ HTML_TEMPLATE = """
     <style>
         @page { size: A5; margin: 0; }
         @media print {
-            /* NEW: Center the bill on the page */
             body { 
                 display: flex;
                 justify-content: center;
@@ -99,7 +98,16 @@ HTML_TEMPLATE = """
             .no-print { display: none !important; }
             .print-container { transform: scale(0.95); transform-origin: top center; width: 100%; height: 100%; }
             #bill-section { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
-            .header-logo-print { height: 3.5rem; margin-right: 1rem; }
+            /* CHANGED: Constrained logo width further */
+            .header-logo-print { 
+                width: 14rem; /* 224px */
+                height: auto;
+                margin-right: 1rem; 
+            }
+            .bits-logo-print {
+                height: 4rem; /* h-16 */
+                width: 4rem;  /* w-16 */
+            }
             .signature-container-print { margin-top: 2rem !important; }
             .signature-grid-print { display: flex !important; justify-content: space-between !important; gap: 1.5rem !important; }
             .signature-grid-print > div { flex: 1; }
@@ -163,15 +171,19 @@ HTML_TEMPLATE = """
 
             <div id="bill-section" class="bg-white rounded-lg shadow-lg p-6 fade-in" style="animation-delay: 0.2s;">
                 <div class="flex justify-between items-start mb-4">                
-                    <img src="{{ url_for('static', filename='Reprography_logo.svg') }}" alt="Reprography Logo" class="h-20 mr-6 header-logo-print">       
-                    <div class="text-right text-sm">
-                        <div class="flex items-center justify-end">
-                            <label for="bill_no" class="font-bold mr-2">Bill No:</label>
-                            <input type="text" id="bill_no" value="{{ bill.bill_display_id }}" data-bill-id="{{ bill.id }}" data-field="bill_display_id" class="w-24 p-1 border rounded bg-white font-semibold bill-field">
-                        </div>
-                        <div class="flex items-center justify-end mt-1">
-                            <label for="bill_date" class="font-bold mr-2">Date:</label>
-                            <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
+                    <!-- CHANGED: Constrained by width (w-64) -->
+                    <img src="{{ url_for('static', filename='Instumentation_Unit_Logo.png') }}" alt="Instrumentation Unit Logo" class="w-64 mr-6 object-contain header-logo-print">
+                    
+                    <div class="flex items-start justify-end text-right text-sm">
+                        <div class="mr-4">
+                            <div class="flex items-center justify-end">
+                                <label for="bill_no" class="font-bold mr-2">Bill No:</label>
+                                <input type="text" id="bill_no" value="{{ bill.bill_display_id }}" data-bill-id="{{ bill.id }}" data-field="bill_display_id" class="w-24 p-1 border rounded bg-white font-semibold bill-field">
+                            </div>
+                            <div class="flex items-center justify-end mt-1">
+                                <label for="bill_date" class="font-bold mr-2">Date:</label>
+                                <input type="date" id="bill_date" value="{{ bill.bill_date }}" data-bill-id="{{ bill.id }}" data-field="bill_date" class="w-32 p-1 border rounded bill-field">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -228,7 +240,7 @@ HTML_TEMPLATE = """
                             </div>
                             <div>
                                 <input type="text" value="{{ bill.fic_reprography or '' }}" data-bill-id="{{ bill.id }}" data-field="fic_reprography" class="w-full bg-transparent border-b-2 border-gray-300 focus:outline-none focus:border-indigo-500 text-center py-1 signature-input bill-field">
-                                <label class="block text-sm font-semibold text-gray-600 mt-2">FIC, Reprography</label>
+                                <label class="block text-sm font-semibold text-gray-600 mt-2">FIC, Instrumentation</label>
                             </div>
                         </div>
                     </div>
@@ -240,7 +252,7 @@ HTML_TEMPLATE = """
                     </div>
                     <div class="mt-8 pt-4 border-t border-dashed">
                         <p class="text-xs text-gray-600 italic">
-                            <span class="font-bold">Note:</span> The Charges may be credited under A/C 07-03-0202, Use of Reprography Facility.
+                            <span class="font-bold">Note:</span> The Charges may be credited under A/C 07-03-0202, Use of Instrumentation Facility.
                         </p>
                     </div>
                 {% else %}
@@ -594,4 +606,3 @@ def delete_product(item_code):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-
